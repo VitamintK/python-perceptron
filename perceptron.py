@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
+import time
 from collections import namedtuple
 
 class Perceptron:
@@ -12,13 +13,15 @@ class Perceptron:
 		self.sample = sample
 		self.b = 0
 		self.done = False
+		self.iterations = 0
 	def iterate(self, plot = False):
+		self.iterations += 1
 		random.shuffle(self.sample)
 		for x in self.sample:
 			if (np.dot(x.x, self.w) > -self.b) != x.y:
 				self.w = self.w + ((x.y)*2-1) * x.x
 				self.b += (x.y)*2 - 1
-				print(self.w, self.b)
+				print(self.iterations, self.w, self.b)
 				break
 		else:
 			print('we done here fAM')
@@ -31,11 +34,12 @@ class Perceptron:
 		while self.iterate(plot):
 			pass
 	def plot(self):
+		assert(self.d == 2)
 		plt.clf()
 		plt.axis([-1,1,-1,1])
 		for x in self.sample:
-			if (np.dot(x.x, self.w) >= -self.b) != x.y:
-			#if x.y != 1:
+			#if (np.dot(x.x, self.w) >= -self.b) != x.y:
+			if x.y != 1:
 				plt.plot(x.x[0], x.x[1], 'or')
 			else:
 				plt.plot(x.x[0], x.x[1], 'ob')
@@ -46,8 +50,10 @@ class Perceptron:
 			b = -self.b/self.w[1]
 			l = np.linspace(-1,1)
 			plt.plot(l, m*l + b, '-k')
-		#plt.ion()
-		#plt.show()
+			#l = np.linspace(-1,1)
+			plt.fill_between(l, m*l+b, math.copysign(1, self.w[1]), alpha=0.5)
+			plt.fill_between(l, m*l+b, math.copysign(1, -1*self.w[1]), color='r', alpha=0.5)
+
 Point = namedtuple('Point', ['y', 'x'])
 
 class Separable_Data:
@@ -80,20 +86,21 @@ class Separable_Data:
 
 
 plt.axis([-1,1,-1,1])
-data = Separable_Data().produce_sample(40)
+data = Separable_Data().produce_sample(70)
 p = Perceptron(sample = data)
 
 fig = plt.figure()
 def animate(i):
 	p.iterate(plot=True)
-def g():
+def g(repeats = 3):
 	while not p.done:
-		print('yay')
 		yield True
-	for _ in range(0,3):
+	for _ in range(0,repeats):
 		yield True
-ani = animation.FuncAnimation(fig, animate, frames = g(), interval = 1000)
-ani.save('PERCEPTRON.mp4', fps=2)#, extra_args=['-vcodec', 'libx264'])
-print("we on this line now")
+ani = animation.FuncAnimation(fig, animate, frames = g(6), interval = 1000, save_count = 300)
+#saving as GIF requires imagemagick to be installed and configured (on windows, by changing the rcsetup.py file http://stackoverflow.com/a/31869370)
+#ani.save('PERCEPTRON-{}.gif'.format(int(time.time())), writer="imagemagick", fps=2)
+#saving as mp4 requires ffmpeg
+ani.save('PERCEPTRON-{}.mp4'.format(int(time.time())), fps=2)
+print("finished saving")
 plt.show()
-print("we finish the whole thing")
